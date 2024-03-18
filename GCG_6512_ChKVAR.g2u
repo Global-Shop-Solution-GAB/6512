@@ -1,0 +1,98 @@
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+''**********************
+'GCG_6512
+'Cus: Wayne Wire Cloth Products, Inc
+'Wayne Wire would like a message box to pop up for when POs are created if the PO lines are at a
+'variance to the standard cost of the item. This message is informational only and does not stop the
+'creation of the PO if the line(s) are at a variance.
+
+'This program check the Variance when saving PO
+'hook:#16870 SAVE-BTN-PRE-HOOK
+
+Program.Sub.Main.Start
+Function.Intrinsic.UI.UsePixels ' Allows you to use Pixels instead of Twips throughout
+
+f.Intrinsic.Control.Try
+	'check passed
+	v.Local.sPO.Declare(String)
+	v.Local.sSQL.Declare(String)
+	v.Local.sRet.Declare(String)
+	v.Local.sMsg.Declare(String)
+	v.Local.iCounter.Declare(Long)
+	v.Local.fVariance.Declare(Float)
+	v.Local.fCost.Declare(Float)
+	v.Local.fStdCost.Declare(Float)
+	v.Local.fVarAbs.Declare(Float)
+	v.Local.fAllowVar.Declare(Float)
+	
+	v.Local.sPO.Set(v.Passed.000008)
+	f.Intrinsic.String.LPad(v.Local.sPO, "0", "7", v.Local.sPO)
+	
+	f.ODBC.Connection!Con.OpenCompanyConnection
+	
+	'live
+	f.Intrinsic.String.Build("select RTRIM(P.PART) PART, P.PRODUCT_LINE, P.COST COST, C.COST STD_COST, case when V.ALLOW_VAR is NULL then 0 else V.ALLOW_VAR end as ALLOW_VAR from V_PO_LINES P left join V_INVENTORY_COST C on RTRIM(P.PART) = RTRIM(C.PART) left join GCG_6512_PART_VAR V on RTRIM(P.PART) = RTRIM(V.PART) where PRODUCT_LINE = '70' and PURCHASE_ORDER = '{0}'", v.Local.sPO, v.Local.sSQL)
+	
+	'test
+'	f.Intrinsic.String.Build("select RTRIM(P.PART) PART, P.PRODUCT_LINE, P.COST COST, C.COST STD_COST, case when V.ALLOW_VAR is NULL then 0 else V.ALLOW_VAR end as ALLOW_VAR from V_PO_LINES P left join V_INVENTORY_COST C on RTRIM(P.PART) = RTRIM(C.PART) left join GCG_6512_PART_VAR V on RTRIM(P.PART) = RTRIM(V.PART) where PRODUCT_LINE = '{0}'", "CM", v.Local.sSQL)
+	
+	f.Intrinsic.Control.If(v.DataTable.dtLines.Exists)
+		f.Data.Datatable.Close("dtLines")
+	f.Intrinsic.Control.EndIf
+	
+	f.Data.Datatable.CreateFromSQL("dtLines", "Con", v.Local.sSQL)
+	
+	f.Intrinsic.Control.If(v.DataTable.dtLines.RowCount,>,0)
+		f.Intrinsic.Control.For(v.Local.iCounter, 0, v.DataTable.dtLines.RowCount--, 1)
+			'No standard cost
+			f.Intrinsic.Control.If(v.DataTable.dtLines(v.Local.iCounter).STD_COST!FieldValTrim,=,0)
+				f.Intrinsic.String.Build("{0} No Standard Cost found for PART#{1}{2}", v.Local.sMsg, v.DataTable.dtLines(v.Local.iCounter).PART!FieldValTrim, v.Ambient.NewLine, v.Local.sMsg)
+				f.Intrinsic.Control.Next(v.Local.iCounter)
+				
+			'With standard cost
+			f.Intrinsic.Control.Else
+				v.Local.fCost.Set(v.DataTable.dtLines(v.Local.iCounter).COST!FieldValTrim)
+				v.Local.fStdCost.Set(v.DataTable.dtLines(v.Local.iCounter).STD_COST!FieldValTrim)
+				v.Local.fAllowVar.Set(v.DataTable.dtLines(v.Local.iCounter).ALLOW_VAR!FieldValTrim)
+				
+				f.Intrinsic.Math.Sub(v.Local.fCost, v.Local.fStdCost, v.Local.fVariance)
+				
+				f.Intrinsic.Control.If(v.Local.fVariance,=,0)
+					f.Intrinsic.Control.Next(v.Local.iCounter)
+				f.Intrinsic.Control.Else
+					f.Intrinsic.Control.if(v.Local.fVariance,<,0)
+						f.Intrinsic.Math.Mult(v.Local.fVariance, -1, v.Local.fVarAbs)
+					f.Intrinsic.Control.Else
+						v.Local.fVarAbs.Set(v.Local.fVariance)
+					f.Intrinsic.Control.EndIf
+					
+					f.Intrinsic.Control.If(v.Local.fVarAbs,>=, v.Local.fAllowVar)
+						f.Intrinsic.String.Build("{0}Price Variance of ${1} for PART#{3}{2}", v.Local.sMsg, v.Local.fVariance, v.Ambient.NewLine, v.DataTable.dtLines(v.Local.iCounter).PART!FieldValTrim, v.Local.sMsg)
+					f.Intrinsic.Control.EndIf
+				
+				f.Intrinsic.Control.EndIf
+			f.Intrinsic.Control.EndIf
+		f.Intrinsic.Control.Next(v.Local.iCounter)
+	f.Intrinsic.Control.EndIf
+	
+	f.ODBC.Connection!Con.Close
+	
+	f.Intrinsic.Control.If(v.Local.sMsg, !=, "")
+		f.Intrinsic.UI.Msgbox(v.Local.sMsg)
+	f.Intrinsic.Control.EndIf
+	
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(Catching)
+f.Intrinsic.Control.EndTry
+Program.Sub.Main.End
+
+Program.Sub.Catching.Start
+f.Intrinsic.UI.Msgbox(v.Ambient.ErrorDescription)
+Program.Sub.Catching.End
+
+Program.Sub.Comments.Start
+${$5$}$3.0.0.0$}$1
+${$6$}$nle$}$20211019215312512$}$kjzCRYkA6UEoRnCwndYnRTQYXMMAxtoQGLNBTVKZ06r6l+PVwnoIR2c34GHnt4Np
+Program.Sub.Comments.End
