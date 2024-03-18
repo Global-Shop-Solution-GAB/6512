@@ -1,0 +1,307 @@
+﻿Program.Sub.ScreenSU.Start
+Gui.FormVARTBL..Create(BaseForm)
+Gui.FormVARTBL..Caption("Variance per Part")
+Gui.FormVARTBL..Size(587,750)
+Gui.FormVARTBL..MinX(0)
+Gui.FormVARTBL..MinY(0)
+Gui.FormVARTBL..Position(0,0)
+Gui.FormVARTBL..AlwaysOnTop(False)
+Gui.FormVARTBL..FontName("Tahoma")
+Gui.FormVARTBL..FontSize(8.25)
+Gui.FormVARTBL..ControlBox(True)
+Gui.FormVARTBL..MaxButton(True)
+Gui.FormVARTBL..MinButton(True)
+Gui.FormVARTBL..MousePointer(0)
+Gui.FormVARTBL..Moveable(True)
+Gui.FormVARTBL..Sizeable(True)
+Gui.FormVARTBL..ShowInTaskBar(True)
+Gui.FormVARTBL..TitleBar(True)
+Gui.FormVARTBL..Event(UnLoad,FormVARTBL_UnLoad)
+Gui.FormVARTBL.GsGcVAR.Create(GsGridControl)
+Gui.FormVARTBL.GsGcVAR.Enabled(True)
+Gui.FormVARTBL.GsGcVAR.Visible(True)
+Gui.FormVARTBL.GsGcVAR.Zorder(0)
+Gui.FormVARTBL.GsGcVAR.Size(573,641)
+Gui.FormVARTBL.GsGcVAR.Position(8,73)
+Gui.FormVARTBL.GsGcVAR.Anchor(15)
+Gui.FormVARTBL.GsGcVAR.Event(CellValueChanged,GsGridControl1_CellValueChanged)
+Gui.FormVARTBL.GsGcVAR.Event(RowClick,GsGridControl1_RowClick)
+Gui.FormVARTBL.txtPart.Create(TextBox,"",True,197,20,0,13,42,True,0,"Tahoma",8.25,,1)
+Gui.FormVARTBL.txtVAR.Create(TextBox,"0",True,62,20,0,255,41,True,0,"Tahoma",8.25,,1)
+Gui.FormVARTBL.txtVAR.NumericOnly(1)
+Gui.FormVARTBL.lblPART.Create(Label,"PART",True,26,13,0,22,25,True,0,"Tahoma",8.25,,0,0)
+Gui.FormVARTBL.lblPART.BorderStyle(0)
+Gui.FormVARTBL.cmd1Browse.Create(Button)
+Gui.FormVARTBL.cmd1Browse.Enabled(True)
+Gui.FormVARTBL.cmd1Browse.Visible(True)
+Gui.FormVARTBL.cmd1Browse.Zorder(0)
+Gui.FormVARTBL.cmd1Browse.Size(27,23)
+Gui.FormVARTBL.cmd1Browse.Position(214,40)
+Gui.FormVARTBL.cmd1Browse.Caption("^")
+Gui.FormVARTBL.cmd1Browse.FontName("Tahoma")
+Gui.FormVARTBL.cmd1Browse.FontSize(8.25)
+Gui.FormVARTBL.cmd1Browse.Event(Click,cmd1Browse_Click)
+Gui.FormVARTBL.lbl1.Create(Label,"VARIANCE",True,51,13,0,257,25,True,0,"Tahoma",8.25,,0,0)
+Gui.FormVARTBL.lbl1.BorderStyle(0)
+Gui.FormVARTBL.cmdAdd.Create(Button)
+Gui.FormVARTBL.cmdAdd.Enabled(True)
+Gui.FormVARTBL.cmdAdd.Visible(True)
+Gui.FormVARTBL.cmdAdd.Zorder(0)
+Gui.FormVARTBL.cmdAdd.Size(75,23)
+Gui.FormVARTBL.cmdAdd.Position(342,39)
+Gui.FormVARTBL.cmdAdd.Caption("ADD")
+Gui.FormVARTBL.cmdAdd.FontName("Tahoma")
+Gui.FormVARTBL.cmdAdd.FontSize(8.25)
+Gui.FormVARTBL.cmdAdd.Event(Click,cmdAdd_Click)
+Gui.FormVARTBL.cmdDelete.Create(Button)
+Gui.FormVARTBL.cmdDelete.Enabled(True)
+Gui.FormVARTBL.cmdDelete.Visible(True)
+Gui.FormVARTBL.cmdDelete.Zorder(0)
+Gui.FormVARTBL.cmdDelete.Size(101,23)
+Gui.FormVARTBL.cmdDelete.Position(461,39)
+Gui.FormVARTBL.cmdDelete.Caption("DELETE SELECTED")
+Gui.FormVARTBL.cmdDelete.FontName("Tahoma")
+Gui.FormVARTBL.cmdDelete.FontSize(8.25)
+Gui.FormVARTBL.cmdDelete.Event(Click,cmdDelete_Click)
+Program.Sub.ScreenSU.End
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+'**********************
+'GCG_6512
+'Cus: Wayne Wire Cloth Products, Inc
+'Wayne Wire would like a message box to pop up for when POs are created if the PO lines are at a
+'variance to the standard cost of the item. This message is informational only and does not stop the
+'creation of the PO if the line(s) are at a variance.
+
+'This program manages the Variance table
+'Oct 2021, NamLe
+
+Program.Sub.Main.Start
+f.Intrinsic.Control.Try
+	Function.Intrinsic.UI.UsePixels ' Allows you to use Pixels instead of Twips throughout
+	
+	f.Intrinsic.Control.CallSub(ReloadForm)
+	gui.FormVARTBL..Show
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(Catching)
+F.Intrinsic.Control.EndTry
+Program.Sub.Main.End
+
+Program.Sub.FormVARTBL_UnLoad.Start
+f.Intrinsic.Control.CallSub(Serialize)
+f.Intrinsic.Control.End
+Program.Sub.FormVARTBL_UnLoad.End
+
+'cmdBROWSE
+Program.Sub.cmd1Browse_Click.Start
+V.Local.sRet.Declare
+V.Local.sPart.Declare
+F.Intrinsic.Control.Try
+	F.Intrinsic.UI.SetBrowserHotTypeAhead(true)
+	F.Intrinsic.UI.Browser(105, , V.Local.sRet)
+	F.Intrinsic.Control.If(V.Local.sRet, <>, "***CANCEL***")
+		F.Intrinsic.String.Split(V.Local.sRet, "*!*", V.Local.sPart)
+		gui.FormVARTBL.txtPart.Text(V.Local.sPart(0).Trim)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(Catching)
+F.Intrinsic.Control.EndTry
+Program.Sub.cmd1Browse_Click.End
+
+'cmdADD
+Program.Sub.cmdAdd_Click.Start
+F.Intrinsic.Control.Try
+	v.Local.sPart.Declare(String)
+	v.Local.fVar.Declare(Float)
+	v.Local.sSQL.Declare(String)
+	v.Local.sRet.Declare(String)
+
+	v.Local.sPart.Set(v.Screen.FormVARTBL!txtPart.Text)
+	v.Local.fVar.Set(v.Screen.FormVARTBL!txtVAR.Text)
+	
+	'not choose a part
+	f.Intrinsic.Control.If(v.Local.sPart,=,"")
+		f.Intrinsic.UI.Msgbox("Please choose a valid Part first.")
+		f.Intrinsic.Control.ExitSub
+	f.Intrinsic.Control.EndIf
+	
+	f.ODBC.Connection!Con.OpenCompanyConnection
+	
+	'part valid?
+	f.Intrinsic.String.Build("select * from V_INVENTORY_MSTR where RTRIM(PART) = '{0}'", v.Local.sPart, v.Local.sSQL)
+	f.ODBC.Connection!Con.ExecuteAndReturn(v.Local.sSQL, v.Local.sRet)
+	
+	f.Intrinsic.Control.If(v.Ambient.ExecuteAndReturnEOF)
+		f.Intrinsic.UI.Msgbox("Part does not exist. Please create the Part first.")
+		f.Intrinsic.Control.ExitSub
+	f.Intrinsic.Control.EndIf
+	
+	'duplicate?
+	f.Intrinsic.String.Build("select * from GCG_6512_PART_VAR where RTRIM(PART)='{0}'", v.Local.sPart, v.Local.sSQL)
+	f.ODBC.Connection!Con.ExecuteAndReturn(v.Local.sSQL, v.Local.sRet)
+	
+	f.Intrinsic.Control.If(v.Ambient.ExecuteAndReturnEOF,=,False)
+		f.Intrinsic.UI.Msgbox("Variance for this Part already exists.")
+		f.Intrinsic.Control.ExitSub
+	f.Intrinsic.Control.EndIf
+	
+	'insert
+	f.Intrinsic.String.Build("insert into GCG_6512_PART_VAR values('{0}','{1}')", v.Local.sPart, v.Local.fVar, v.Local.sSQL)
+	f.ODBC.Connection!Con.Execute(v.Local.sSQL)
+	
+	f.ODBC.Connection!Con.Close
+	
+	'reload
+	f.Intrinsic.Control.CallSub(ReloadForm)
+	
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(Catching)
+F.Intrinsic.Control.EndTry
+Program.Sub.cmdAdd_Click.End
+
+Program.Sub.cmdDelete_Click.Start
+f.Intrinsic.Control.Try
+	v.Local.sSelectedPart.Declare(String)
+	v.Local.iCount.Declare(Long)
+	v.Local.sSQL.Declare(String)
+	
+	f.Data.DataView.Create("dtVarRef", "dvDeleteLine", 22, "Select=True","")
+	
+	f.Intrinsic.Control.If(v.DataTable.dtDeleteLine.Exists)
+		f.Data.Datatable.Close("dtDeleteLine")
+	f.Intrinsic.Control.EndIf
+	
+	f.Data.DataView.ToDataTable("dtVarRef", "dvDeleteLine", "dtDeleteLine")
+	f.Data.DataView.Close("dtVarRef", "dvDeleteLine")
+	
+	'delete if record exists
+	f.Intrinsic.Control.If(v.DataTable.dtDeleteLine.RowCount,>,0)
+		f.ODBC.Connection!Con.OpenCompanyConnection
+		f.Intrinsic.Control.For(v.Local.iCount,0, v.DataTable.dtDeleteLine.RowCount--, 1)
+				f.Intrinsic.String.Build("delete from GCG_6512_PART_VAR where RTRIM(PART)='{0}'", v.DataTable.dtDeleteLine(v.Local.iCount).PART!FieldValTrim, v.Local.sSQL)
+				f.ODBC.Connection!Con.Execute(v.Local.sSQL)
+		f.Intrinsic.Control.Next(v.Local.iCount)
+		f.ODBC.Connection!Con.Close
+	f.Intrinsic.Control.EndIf
+
+	f.Intrinsic.Control.CallSub(ReloadForm)
+	
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(Catching)
+F.Intrinsic.Control.EndTry
+Program.Sub.cmdDelete_Click.End
+
+Program.Sub.ReloadForm.Start
+f.Intrinsic.Control.Try
+
+	gui.FormVARTBL.txtPart.Text("")
+	gui.FormVARTBL.txtVAR.Text("0")
+	
+	gui.FormVARTBL.GsGcVAR.Visible(False)
+	
+	f.Intrinsic.Control.CallSub(GetData)
+	f.Intrinsic.Control.CallSub(LoadGrid)
+	f.Intrinsic.Control.CallSub(Deserialize)
+	gui.FormVARTBL.GsGcVAR.Visible(True)
+	
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(Catching)
+F.Intrinsic.Control.EndTry
+Program.Sub.ReloadForm.End
+
+'Get Data
+Program.Sub.GetData.Start
+f.Intrinsic.Control.Try
+	v.Local.sSQL.Declare(String)
+	v.Local.sRet.Declare(String)
+	
+	f.ODBC.Connection!Con.OpenCompanyConnection
+		f.Intrinsic.Control.If(v.DataTable.dtVarRef.Exists)
+			f.Data.Datatable.Close("dtVarRef")
+		f.Intrinsic.Control.EndIf
+		
+		v.Local.sSQL.Set("select RTRIM(V.PART) PART, V.ALLOW_VAR , I.DESCRIPTION from GCG_6512_PART_VAR V left join V_INVENTORY_MSTR I on RTRIM(I.PART) = RTRIM(V.PART) order by V.PART")
+'		f.Data.Datatable.CreateFromSQL("dtVarRef", "Con", "select RTRIM(PART) PART, ALLOW_VAR from GCG_6512_PART_VAR order by PART", True)
+		f.Data.Datatable.CreateFromSQL("dtVarRef", "Con", v.Local.sSQL, True)
+
+	
+	f.ODBC.Connection!Con.Close
+	
+	f.Data.Datatable.AddColumn("dtVarRef", "Select", "Boolean")
+	f.Data.Datatable.SetValue("dtVarRef", -1, "Select", False)
+	
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(Catching)
+F.Intrinsic.Control.EndTry
+Program.Sub.GetData.End
+
+Program.Sub.LoadGrid.Start
+f.Intrinsic.Control.Try
+	gui.FormVARTBL.GsGcVAR.AddGridviewFromDatatable("gvPartVar", "dtVarRef")
+
+	'grid props
+	gui.FormVARTBL.GsGcVAR.SetGridviewProperty("gvPartVar",v.Enum.GridViewPropertyNames!EnableAppearanceEvenRow, True)
+	gui.FormVARTBL.GsGcVAR.SetGridviewProperty("gvPartVar","OptionsViewShowAutoFilterRow", true)
+	gui.FormVARTBL.GsGcVAR.SetGridviewProperty("gvPartVar",v.Enum.GridViewPropertyNames!Editable, True)
+	gui.FormVARTBL.GsGcVAR.SetGridviewProperty("gvPartVar",v.Enum.GridViewPropertyNames!ReadOnly, False)
+	gui.FormVARTBL.GsGcVAR.SetGridviewProperty("gvPartVar","OptionsViewColumnAutoWidth", false)
+	
+	gui.FormVARTBL.GsGcVAR.SetColumnProperty("gvPartVar", "PART", v.Enum.ColumnPropertyNames!Caption, "Part")
+	gui.FormVARTBL.GsGcVAR.SetColumnProperty("gvPartVar", "ALLOW_VAR", v.Enum.ColumnPropertyNames!Caption, "Allowed Variance")
+	gui.FormVARTBL.GsGcVAR.SetColumnProperty("gvPartVar", "DESCRIPTION", v.Enum.ColumnPropertyNames!Caption, "Description")
+	
+	gui.FormVARTBL.GsGcVAR.SetColumnProperty("gvPartVar", "PART", v.Enum.ColumnPropertyNames!HeaderFontBold, True)
+	gui.FormVARTBL.GsGcVAR.SetColumnProperty("gvPartVar", "ALLOW_VAR", v.Enum.ColumnPropertyNames!HeaderFontBold, True)
+	gui.FormVARTBL.GsGcVAR.SetColumnProperty("gvPartVar", "DESCRIPTION", v.Enum.ColumnPropertyNames!HeaderFontBold, True)
+	gui.FormVARTBL.GsGcVAR.SetColumnProperty("gvPartVar", "Select", v.Enum.ColumnPropertyNames!HeaderFontBold, True)
+	
+	
+	
+	gui.FormVARTBL.GsGcVAR.MainView("gvPartVar")
+F.Intrinsic.Control.Catch
+	F.Intrinsic.Control.CallSub(Catching)
+F.Intrinsic.Control.EndTry
+Program.Sub.LoadGrid.End
+
+Program.Sub.GsGridControl1_CellValueChanged.Start
+Program.Sub.GsGridControl1_CellValueChanged.End
+
+Program.Sub.GsGridControl1_RowClick.Start
+Program.Sub.GsGridControl1_RowClick.End
+
+Program.Sub.Serialize.Start
+f.Intrinsic.Control.Try
+	v.Local.sSerialize.Declare(String)
+	
+	gui.FormVARTBL.GsGcVAR.Serialize("gvPartVar", v.Local.sSerialize)
+	f.Global.Registry.AddValue(v.Caller.User, v.Caller.CompanyCode, "gvPartVar", 6512, 1000, False, "Serialize", False, 0, -999.0,1/1/1980,12:00:00 AM,V.Local.sSerialize)
+	
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(Catching)
+f.Intrinsic.Control.EndTry
+Program.Sub.Serialize.End
+
+Program.Sub.Deserialize.Start
+f.Intrinsic.Control.Try
+	v.Local.sSerialize.Declare(String)
+	
+	f.Global.Registry.ReadValue(V.Caller.User,V.Caller.CompanyCode,"gvPartVar", 6512,1000,6,"Default",V.Local.sSerialize)
+	
+	F.Intrinsic.Control.If(V.Local.sSerialize.Trim,<>,"")
+		gui.FormVARTBL.GsGcVAR.Deserialize(V.Local.sSerialize)
+	F.Intrinsic.Control.EndIf
+	
+f.Intrinsic.Control.Catch
+	f.Intrinsic.Control.CallSub(Catching)
+f.Intrinsic.Control.EndTry
+Program.Sub.Deserialize.End
+
+Program.Sub.Catching.Start
+f.Intrinsic.UI.Msgbox(v.Ambient.ErrorDescription)
+Program.Sub.Catching.End
+
+Program.Sub.Comments.Start
+${$5$}$3.0.0.0$}$1
+${$6$}$nle$}$20211020113813679$}$kjzCRYkA6UEoRnCwndYnRTQYXMMAxtoQM4GGjI9thAthJlcA/SGBQJ/FkuVYdSNe
+Program.Sub.Comments.End
